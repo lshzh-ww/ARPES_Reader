@@ -1,0 +1,380 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<ui version="4.0">
+ <class>MainWindow</class>
+ <widget class="QMainWindow" name="MainWindow">
+  <property name="geometry">
+   <rect>
+    <x>0</x>
+    <y>0</y>
+    <width>602</width>
+    <height>855</height>
+   </rect>
+  </property>
+  <property name="windowTitle">
+   <string>ARPES Data Reader</string>
+  </property>
+  <widget class="QWidget" name="centralwidget">
+   <layout class="QVBoxLayout" name="verticalLayout_2">
+    <item>
+     <widget class="QSplitter" name="splitter">
+      <property name="sizePolicy">
+       <sizepolicy hsizetype="Expanding" vsizetype="Expanding">
+        <horstretch>1</horstretch>
+        <verstretch>1</verstretch>
+       </sizepolicy>
+      </property>
+      <property name="orientation">
+       <enum>Qt::Vertical</enum>
+      </property>
+      <widget class="ImageView" name="topGraphWidget" native="true">
+       <property name="sizePolicy">
+        <sizepolicy hsizetype="Expanding" vsizetype="Expanding">
+         <horstretch>4</horstretch>
+         <verstretch>3</verstretch>
+        </sizepolicy>
+       </property>
+      </widget>
+      <widget class="QFrame" name="frame">
+       <property name="sizePolicy">
+        <sizepolicy hsizetype="Expanding" vsizetype="Expanding">
+         <horstretch>4</horstretch>
+         <verstretch>1</verstretch>
+        </sizepolicy>
+       </property>
+       <property name="frameShape">
+        <enum>QFrame::StyledPanel</enum>
+       </property>
+       <property name="frameShadow">
+        <enum>QFrame::Raised</enum>
+       </property>
+       <layout class="QVBoxLayout" name="verticalLayout">
+        <item>
+         <widget class="QTabWidget" name="tabWidget">
+          <property name="sizePolicy">
+           <sizepolicy hsizetype="Expanding" vsizetype="Expanding">
+            <horstretch>4</horstretch>
+            <verstretch>4</verstretch>
+           </sizepolicy>
+          </property>
+          <property name="currentIndex">
+           <number>0</number>
+          </property>
+          <widget class="QWidget" name="bottomTab1">
+           <attribute name="title">
+            <string>kx-ky</string>
+           </attribute>
+           <layout class="QGridLayout" name="gridLayout_2">
+            <item row="0" column="0">
+             <layout class="QGridLayout" name="kxkyGrid">
+              <property name="sizeConstraint">
+               <enum>QLayout::SetDefaultConstraint</enum>
+              </property>
+              <property name="spacing">
+               <number>20</number>
+              </property>
+              <item row="0" column="3">
+               <widget class="QLineEdit" name="polarStartBox"/>
+              </item>
+              <item row="1" column="4">
+               <widget class="QLabel" name="label_7">
+                <property name="text">
+                 <string>deg</string>
+                </property>
+               </widget>
+              </item>
+              <item row="0" column="6">
+               <widget class="QLabel" name="label_4">
+                <property name="text">
+                 <string>Photon Energy</string>
+                </property>
+               </widget>
+              </item>
+              <item row="0" column="2">
+               <widget class="QLabel" name="label_2">
+                <property name="text">
+                 <string>Start</string>
+                </property>
+               </widget>
+              </item>
+              <item row="0" column="7">
+               <widget class="QLineEdit" name="energyBox"/>
+              </item>
+              <item row="0" column="1">
+               <widget class="QLabel" name="label">
+                <property name="text">
+                 <string>Theta y</string>
+                </property>
+               </widget>
+              </item>
+              <item row="1" column="3">
+               <widget class="QLineEdit" name="polarEndBox"/>
+              </item>
+              <item row="0" column="4">
+               <widget class="QLabel" name="label_6">
+                <property name="text">
+                 <string>deg</string>
+                </property>
+               </widget>
+              </item>
+              <item row="1" column="2">
+               <widget class="QLabel" name="label_3">
+                <property name="text">
+                 <string>End</string>
+                </property>
+               </widget>
+              </item>
+              <item row="0" column="8">
+               <widget class="QLabel" name="label_8">
+                <property name="text">
+                 <string>eV</string>
+                </property>
+               </widget>
+              </item>
+             </layout>
+            </item>
+            <item row="0" column="1">
+             <widget class="QPushButton" name="kxkyBtn">
+              <property name="text">
+               <string>Convert</string>
+              </property>
+             </widget>
+            </item>
+           </layout>
+          </widget>
+          <widget class="QWidget" name="bottomTab2">
+           <attribute name="title">
+            <string>kx-kz</string>
+           </attribute>
+           <layout class="QGridLayout" name="gridLayout_3">
+            <item row="0" column="0">
+             <layout class="QGridLayout" name="kxkzGrid">
+              <property name="spacing">
+               <number>20</number>
+              </property>
+              <item row="0" column="4">
+               <widget class="QLabel" name="label_14">
+                <property name="text">
+                 <string>Theta y</string>
+                </property>
+               </widget>
+              </item>
+              <item row="0" column="2">
+               <widget class="QLineEdit" name="energyStartBox"/>
+              </item>
+              <item row="1" column="2">
+               <widget class="QLineEdit" name="energyEndBox"/>
+              </item>
+              <item row="0" column="3">
+               <widget class="QLabel" name="label_15">
+                <property name="text">
+                 <string>eV</string>
+                </property>
+               </widget>
+              </item>
+              <item row="1" column="3">
+               <widget class="QLabel" name="label_16">
+                <property name="text">
+                 <string>eV</string>
+                </property>
+               </widget>
+              </item>
+              <item row="0" column="1">
+               <widget class="QLabel" name="label_13">
+                <property name="text">
+                 <string>Start</string>
+                </property>
+               </widget>
+              </item>
+              <item row="0" column="0">
+               <widget class="QLabel" name="label_11">
+                <property name="text">
+                 <string>Photon Energy</string>
+                </property>
+               </widget>
+              </item>
+              <item row="1" column="1">
+               <widget class="QLabel" name="label_12">
+                <property name="text">
+                 <string>End</string>
+                </property>
+               </widget>
+              </item>
+              <item row="0" column="5">
+               <widget class="QLineEdit" name="polarBox"/>
+              </item>
+              <item row="0" column="6">
+               <widget class="QLabel" name="label_17">
+                <property name="text">
+                 <string>deg</string>
+                </property>
+               </widget>
+              </item>
+             </layout>
+            </item>
+            <item row="0" column="1">
+             <widget class="QPushButton" name="kxkzBtn">
+              <property name="text">
+               <string>Convert</string>
+              </property>
+             </widget>
+            </item>
+           </layout>
+          </widget>
+         </widget>
+        </item>
+        <item>
+         <layout class="QGridLayout" name="gridLayout">
+          <property name="spacing">
+           <number>20</number>
+          </property>
+          <item row="1" column="1">
+           <widget class="QLineEdit" name="v0Box"/>
+          </item>
+          <item row="1" column="0">
+           <widget class="QLabel" name="label_5">
+            <property name="text">
+             <string>V0</string>
+            </property>
+           </widget>
+          </item>
+          <item row="1" column="3">
+           <widget class="QLabel" name="label_10">
+            <property name="text">
+             <string>Interpolation Type</string>
+            </property>
+           </widget>
+          </item>
+          <item row="1" column="5">
+           <widget class="QRadioButton" name="radioBtn21">
+            <property name="text">
+             <string>None</string>
+            </property>
+           </widget>
+          </item>
+          <item row="1" column="2">
+           <widget class="QLabel" name="label_9">
+            <property name="text">
+             <string>eV</string>
+            </property>
+           </widget>
+          </item>
+          <item row="1" column="4">
+           <widget class="QRadioButton" name="radioBtn22">
+            <property name="text">
+             <string>Linear</string>
+            </property>
+           </widget>
+          </item>
+         </layout>
+        </item>
+        <item>
+         <widget class="QLabel" name="bindingEnergyDisplay">
+          <property name="text">
+           <string/>
+          </property>
+         </widget>
+        </item>
+       </layout>
+      </widget>
+     </widget>
+    </item>
+   </layout>
+  </widget>
+  <widget class="QMenuBar" name="menubar">
+   <property name="geometry">
+    <rect>
+     <x>0</x>
+     <y>0</y>
+     <width>602</width>
+     <height>37</height>
+    </rect>
+   </property>
+   <property name="nativeMenuBar">
+    <bool>false</bool>
+   </property>
+   <widget class="QMenu" name="menuFile">
+    <property name="title">
+     <string>File</string>
+    </property>
+    <addaction name="loadFileAct"/>
+    <addaction name="txt2npyAct"/>
+    <addaction name="exitAct"/>
+   </widget>
+   <widget class="QMenu" name="menuPre_Process">
+    <property name="title">
+     <string>Pre Process</string>
+    </property>
+    <addaction name="normalAct"/>
+    <addaction name="maskAct"/>
+    <addaction name="fixFermiAct"/>
+    <addaction name="gaussianBlurAct"/>
+   </widget>
+   <widget class="QMenu" name="menuAnalysis">
+    <property name="title">
+     <string>Analysis</string>
+    </property>
+    <addaction name="findBandPosAct"/>
+    <addaction name="minGradAct"/>
+   </widget>
+   <addaction name="menuFile"/>
+   <addaction name="menuPre_Process"/>
+   <addaction name="menuAnalysis"/>
+  </widget>
+  <widget class="QStatusBar" name="statusbar"/>
+  <action name="loadFileAct">
+   <property name="text">
+    <string>Load</string>
+   </property>
+  </action>
+  <action name="txt2npyAct">
+   <property name="text">
+    <string>Convert to npy</string>
+   </property>
+  </action>
+  <action name="exitAct">
+   <property name="text">
+    <string>Exit</string>
+   </property>
+  </action>
+  <action name="normalAct">
+   <property name="text">
+    <string>Normalize Data</string>
+   </property>
+  </action>
+  <action name="maskAct">
+   <property name="text">
+    <string>Mask Data</string>
+   </property>
+  </action>
+  <action name="fixFermiAct">
+   <property name="text">
+    <string>Fix Fermi Zero Point</string>
+   </property>
+  </action>
+  <action name="findBandPosAct">
+   <property name="text">
+    <string>Find Band Position</string>
+   </property>
+  </action>
+  <action name="minGradAct">
+   <property name="text">
+    <string>Minimum Gradient Method</string>
+   </property>
+  </action>
+  <action name="gaussianBlurAct">
+   <property name="text">
+    <string>Gaussian Blur</string>
+   </property>
+  </action>
+ </widget>
+ <customwidgets>
+  <customwidget>
+   <class>ImageView</class>
+   <extends>QWidget</extends>
+   <header>pyqtgraph</header>
+   <container>1</container>
+  </customwidget>
+ </customwidgets>
+ <resources/>
+ <connections/>
+</ui>
