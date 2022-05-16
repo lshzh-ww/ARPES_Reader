@@ -192,6 +192,15 @@ def gaussianBlurFunc(self,ui):
     self.displayData=Analysis.kSpace.gaussian_blur(self.displayData) 
     ui.topGraphWidget.setImage(self.displayData)
 
+
+def integrateAlongEaxisFunc(self,ui):
+    #pop a window to get the integration range
+    text,ok=QInputDialog.getText(self,'Integration Range','Enter the range of integration along the energy axis (eV) (e.g. 0.01)')
+    if ok:
+        fRange=float(text)
+        range=int(abs(self.axis1Position[1]-self.axis1Position[0])/fRange)
+        self.displayData=Analysis.kSpace.integrateAlongEaxis(self.displayData,range)
+        ui.topGraphWidget.setImage(self.displayData)
         
         
 def main():
@@ -225,6 +234,7 @@ def main():
     ui.kxkyBtn.clicked.connect(partial(kxkyConvertFunc,mainWindow,ui))
     ui.kxkzBtn.clicked.connect(partial(kxkzConvertFunc,mainWindow,ui))
     ui.gaussianBlurAct.triggered.connect(partial(gaussianBlurFunc,mainWindow,ui))
+    ui.integrateAlongEaxisAct.triggered.connect(partial(integrateAlongEaxisFunc,mainWindow,ui))
 
     #default select tab 1.
     ui.tabWidget.setCurrentIndex(0)

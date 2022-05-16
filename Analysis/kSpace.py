@@ -225,3 +225,12 @@ def gaussian_blur(displayData):
         displayData[index]=scipy.ndimage.gaussian_filter(displayData[index],sigma=3)
     return displayData
 
+@jit(nopython=True)
+def integrateAlongEaxis(displayData,intRange):
+    newDisplayData=numpy.zeros((len(displayData),len(displayData[0]),len(displayData[0,0])),dtype=numpy.float32)
+    for i in range(intRange,len(displayData)-intRange):
+        for j in range(len(displayData[0])):
+            for k in range(len(displayData[0,0])):
+                newDisplayData[i,j,k]=numpy.sum(displayData[i-intRange:i+intRange,j,k])
+
+    return newDisplayData

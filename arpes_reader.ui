@@ -315,6 +315,7 @@
     </property>
     <addaction name="findBandPosAct"/>
     <addaction name="minGradAct"/>
+    <addaction name="integrateAlongEaxisAct"/>
    </widget>
    <addaction name="menuFile"/>
    <addaction name="menuPre_Process"/>
@@ -364,6 +365,11 @@
   <action name="gaussianBlurAct">
    <property name="text">
     <string>Gaussian Blur</string>
+   </property>
+  </action>
+  <action name="integrateAlongEaxisAct">
+   <property name="text">
+    <string>Integrate Along E Axis</string>
    </property>
   </action>
  </widget>
