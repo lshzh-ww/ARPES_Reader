@@ -1,7 +1,11 @@
+from multiprocessing.dummy import active_children
+from matplotlib.pyplot import sci
 import numpy
 from numba import jit
 import scipy.interpolate
 import scipy.optimize
+import scipy.ndimage
+from functools import partial
 
 def findMaxSlope(intensity):
     deltaH=4
@@ -17,6 +21,30 @@ def findMaxSlope(intensity):
         if slopeArray[peak_list[-1]] > 60.*abs(last_one):
             break
     return peak_list[-1]
+
+def fermiDiracDis(Temp,sigma_wd,x,A,u,b):
+    #8.61733e-5 is kb in eV/K
+    try:
+        return scipy.ndimage.gaussian_filter((A*x+b)/(numpy.exp((x-u)/(Temp*8.61733e-5))+1.),sigma_wd)
+    except RuntimeWarning:
+        return 0.
+
+#fitting data by the fermi dirac distribution to get the zero point
+def fitFermiDirac(energyAxis,intensityArray,Temp):
+    # take convolution width as 10 meV
+    convWidth=0.01
+    sigma_wd=convWidth/abs(energyAxis[1]-energyAxis[0])
+
+    # initialize parameters
+    a_0=0.
+    u_0=0.
+    b_0=0.5*numpy.mean(intensityArray)
+    # fitting
+    try:
+        result,err=scipy.optimize.curve_fit(partial(fermiDiracDis,Temp,sigma_wd),energyAxis,intensityArray,[a_0,u_0,b_0],maxfev=10000)
+    except RuntimeError:
+        return numpy.NaN
+    return result[1]
 
 @jit(nopython=True)
 def maskData(data,N):
@@ -43,43 +71,6 @@ def normalizeData(data):
         data[i]=data[i]/rawIntensity[i]
 
     return data,rawIntensity
-
-def fermiDiracDis(x,A,u):
-    Temp=10.
-    return A/(numpy.exp((x-u)/(Temp*8.61733e-5))+1.)
-
-#@jit
-def fixFermiZeroPoint(data,energyAxis,fitXStart,fitXEnd,fitYStart,fitYEnd,Temp):
-    #points for get fermi arc
-    N=11
-    energyArray=energyAxis[fitYStart:fitYEnd]
-    splineData=numpy.zeros((2,N),dtype=numpy.float64)
-    xIndex=numpy.arange(fitXStart,fitXEnd+1,1)
-    for i in range(len(data)):
-        for j in range(N):
-            xPos=int(j*(fitXEnd-fitXStart)/(N-1)+fitXStart)
-            intensityArray=data[i,xPos,fitYStart:fitYEnd]
-            try:
-                result=scipy.optimize.curve_fit(fermiDiracDis,energyArray,intensityArray,[1,0])
-            except RuntimeError:
-                splineData[0,j]=xPos
-            else:   
-                splineData[0,j]=xPos
-                delta=0
-                for k in range(len(energyAxis)):
-                    if energyAxis[k]>result[0][1] and energyAxis[k]<0.:
-                        delta=delta+1
-                    elif energyAxis[k]<result[0][1] and energyAxis[k]>0.:
-                        delta=delta-1
-                splineData[1,j]=delta
-        print(splineData)
-        tck=scipy.interpolate.splrep(splineData[0],splineData[1],s=0)
-        diffArray=scipy.interpolate.splev(xIndex,tck)
-        for j in range(len(xIndex)):
-            data[i,xIndex[j]]=numpy.roll(data[i,xIndex[j]],int(diffArray[j]))
-
-    return data
-
 
 def simpleParabolaFunc(x,a,c):
     return a*x*x+c
@@ -119,6 +110,58 @@ def quickCalFL(data, fLPos, zeroThetaX):
             data[index,i,:]=numpy.roll(data[index,i],-step+fLPos)
     
     return data
+
+def slowCalFL(data,fLPos,zeroThetaX,energyAxis,Temp):
+    N=15
+    fN=float(N)
+    #find location of the first value larger than -1 in energyAxis and the first value larger than 1 in energyAxis
+    fittingRegion=numpy.zeros(2,dtype=int)
+    fittingRegion[0]=numpy.where(energyAxis>-0.3)[0][0]
+    #fittingRegion[1]=numpy.where(energyAxis>1.)[0][0]
+    fittingRegion[1]=len(energyAxis)
+
+    xAxisLen=float(len(data[0]))
+    bins_array=numpy.zeros((N,len(data[0][0])))
+    meta_para_fit=numpy.zeros((2,len(data)))
+    for index in range(len(data)):
+        for i in range(N):
+            bins_array[i]=numpy.sum(data[index,int((float(i)-1.)*xAxisLen/fN):int(float(i)*xAxisLen/fN),:],0)
+        
+        xPos_list=list()
+        yPos_list=list()
+        for i in range(N):
+            if numpy.sum(bins_array[i]) > 0.5* numpy.sum(bins_array[N//2]) and i!=0 and i!=N-1:
+                #fit the data within fitting region
+                result=fitFermiDirac(energyAxis[fittingRegion[0]:fittingRegion[1]],bins_array[i,fittingRegion[0]:fittingRegion[1]],Temp)
+                if result!=numpy.NaN:
+                    yPos_list.append(numpy.where(energyAxis>result)[0][0])
+                    xPos_list.append(int((float(i)-0.5)*xAxisLen/fN)-zeroThetaX)
+                else:
+                    print("Filled at index:",index,'with value:',i)
+
+        #paint fit result on the data by set the corresponding value to max value
+        #max_brightness=numpy.max(data[index])
+        #for i in range(len(xPos_list)):
+        #    data[index,int(xPos_list[i]+zeroThetaX),yPos_list[i]]=max_brightness
+            
+
+
+        para=scipy.optimize.curve_fit(simpleParabolaFunc,xPos_list,yPos_list)
+        meta_para_fit[0,index]=para[0][0]
+        meta_para_fit[1,index]=para[0][1]
+
+    para=scipy.optimize.curve_fit(simpleLinearFunc,range(len(data)-10),meta_para_fit[0,:-10])
+    meta_para_fit[0]=simpleLinearFunc(range(len(data)),para[0][0],para[0][1])
+    para=scipy.optimize.curve_fit(simpleParabolaFunc,range(len(data)-10),meta_para_fit[1,:-10])
+    meta_para_fit[1]=simpleParabolaFunc(range(len(data)),para[0][0],para[0][1])
+
+    for index in range(len(data)):    
+        for i in range(len(data[0])):
+            step=int(simpleParabolaFunc(i-zeroThetaX,meta_para_fit[0,index],meta_para_fit[1,index]))
+            data[index,i,:]=numpy.roll(data[index,i],-step+fLPos)
+    
+    return meta_para_fit
+    
 
 
 # rotate a 2D array respect to a given position

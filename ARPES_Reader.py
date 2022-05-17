@@ -75,12 +75,14 @@ def fixFermiSurfFunc(self,ui):
     for i in range(len(self.axis1Position)):
         if self.axis1Position[i]*self.axis1Position[i+1] <0.:
             break
-    
-    Analysis.thetaSpace.quickCalFL(self.rawData, self.fermi_pos,i)
-    trans=QTransform()
-    trans.translate(self.axis1Position[0],self.axis2Position[0])
-    trans.scale((self.axis1Position[len(self.axis1Position)-1]-self.axis1Position[0])/len(self.axis1Position),(self.axis2Position[len(self.axis2Position)-1]-self.axis2Position[0])/len(self.axis2Position))
-    ui.topGraphWidget.setImage(self.rawData,transform=trans)
+    #Ask for the temperature and use the temperature to calculate the fermi surface
+    text, ok = QInputDialog.getText(self, 'Fix Fermi Surface?','What is the temperature?')
+    if ok:
+        Analysis.thetaSpace.slowCalFL(self.rawData, self.fermi_pos,i,self.axis2Position,float(text))
+        trans=QTransform()
+        trans.translate(self.axis1Position[0],self.axis2Position[0])
+        trans.scale((self.axis1Position[len(self.axis1Position)-1]-self.axis1Position[0])/len(self.axis1Position),(self.axis2Position[len(self.axis2Position)-1]-self.axis2Position[0])/len(self.axis2Position))
+        ui.topGraphWidget.setImage(self.rawData,transform=trans)
 
 def findBandPosFunc(self,ui):
     xyRange=self.topGraphWidget.view.getViewBox().viewRange()
@@ -174,8 +176,7 @@ def kxkzConvertFunc(self,ui):
     trans=QTransform()
     trans.translate(self.kxPosition[0],self.kzPosition[0])
     trans.scale((self.kxPosition[len(self.kxPosition)-1]-self.kxPosition[0])/len(self.kxPosition),(self.kzPosition[len(self.kzPosition)-1]-self.kzPosition[0])/len(self.kzPosition))
-    self.topGraphWidget.setImage(self.displayData,transform=trans)
-    
+    ui.topGraphWidget.setImage(self.displayData,transform=trans)
 
     self.bandPos=np.zeros((0,3))
 
@@ -198,9 +199,15 @@ def integrateAlongEaxisFunc(self,ui):
     text,ok=QInputDialog.getText(self,'Integration Range','Enter the range of integration along the energy axis (eV) (e.g. 0.01)')
     if ok:
         fRange=float(text)
-        range=int(abs(self.axis1Position[1]-self.axis1Position[0])/fRange)
-        self.displayData=Analysis.kSpace.integrateAlongEaxis(self.displayData,range)
+        iRange=int(fRange/abs(self.axis2Position[1]-self.axis2Position[0]))
+        print(iRange)
+        self.displayData=Analysis.kSpace.integrateAlongEaxis(self.displayData,iRange)
+        #reset scale and display new data
+        ui.topGraphWidget.view.setLabel('bottom','kx','1/Å')
+        ui.topGraphWidget.view.setLabel('left','ky','1/Å')
         ui.topGraphWidget.setImage(self.displayData)
+        trans=QTransform()
+
         
         
 def main():
