@@ -15,7 +15,7 @@ from PyQt5.QtGui import QTransform
 from pathlib import Path
 
 
-import arpes_gui
+import GUI.arpes_main as arpes_main
 
 
 
@@ -213,7 +213,7 @@ def integrateAlongEaxisFunc(self,ui):
 def main():
     app = QApplication(sys.argv)
     mainWindow = QMainWindow()
-    ui=arpes_gui.Ui_MainWindow()
+    ui=arpes_main.Ui_MainWindow()
     ui.setupUi(mainWindow)
     
     mainWindow.show()
