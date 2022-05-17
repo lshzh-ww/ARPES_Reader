@@ -28,7 +28,7 @@
       </property>
       <widget class="ImageView" name="topGraphWidget" native="true">
        <property name="sizePolicy">
-        <sizepolicy hsizetype="Expanding" vsizetype="Expanding">
+        <sizepolicy hsizetype="Preferred" vsizetype="Preferred">
          <horstretch>4</horstretch>
          <verstretch>3</verstretch>
         </sizepolicy>
@@ -316,6 +316,7 @@
     <addaction name="findBandPosAct"/>
     <addaction name="minGradAct"/>
     <addaction name="integrateAlongEaxisAct"/>
+    <addaction name="alignFermiSufAct"/>
    </widget>
    <addaction name="menuFile"/>
    <addaction name="menuPre_Process"/>
@@ -370,6 +371,11 @@
   <action name="integrateAlongEaxisAct">
    <property name="text">
     <string>Integrate Along E Axis</string>
+   </property>
+  </action>
+  <action name="alignFermiSufAct">
+   <property name="text">
+    <string>Align Fermi Surface with Axes</string>
    </property>
   </action>
  </widget>

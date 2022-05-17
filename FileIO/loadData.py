@@ -6,16 +6,16 @@ import zipfile
 import configparser
 import io
 
-def load(self,ui,filename):
+def load(self,filename):
     fileType=filename[len(filename)-3:]
     if fileType=='npy':
-        return npyFile(self,ui,filename)
+        return npyFile(self,filename)
     elif fileType=='mat':
-        return matFile(self,ui,filename)
+        return matFile(self,filename)
     elif fileType=='txt':
-        return txtFile(self,ui,filename)
+        return txtFile(self,filename)
     elif fileType=='zip':
-        return zipFile(self,ui,filename)   
+        return zipFile(self,filename)   
 
 
 def matFile(self,filename):
@@ -31,16 +31,16 @@ def matFile(self,filename):
 
 
 #For DA30 mode at BNL
-def zipFile(self,ui,filename):
+def zipFile(self,filename):
     da30File=zipfile.ZipFile(filename)
     infoWrapper=io.TextIOWrapper(da30File.open('Spectrum_XPS.ini'),encoding='utf-8')
     config = configparser.ConfigParser()
     config.read_file(infoWrapper)
     self.axis1Position=numpy.linspace(float(config['spectrum']['heightoffset']),float(config['spectrum']['heightoffset'])+(float(config['spectrum']['height'])-1)*float(config['spectrum']['heightdelta']),int(config['spectrum']['height']))
     self.axis2Position=numpy.linspace(float(config['spectrum']['widthoffset']),float(config['spectrum']['widthoffset'])+(float(config['spectrum']['width'])-1)*float(config['spectrum']['widthdelta']),int(config['spectrum']['width']))
-    ui.polarStartBox.setText(config['spectrum']['depthoffset'])
+    self.polarStartBox.setText(config['spectrum']['depthoffset'])
     endPolar=float(config['spectrum']['depthoffset'])+(float(config['spectrum']['depth'])-1)*float(config['spectrum']['depthdelta'])
-    ui.polarEndBox.setText(str(endPolar))
+    self.polarEndBox.setText(str(endPolar))
     M=numpy.frombuffer(da30File.read('Spectrum_XPS.bin'),dtype=numpy.float32)
     M=numpy.reshape(M,(int(config['spectrum']['depth']),int(config['spectrum']['height']),int(config['spectrum']['width'])))
 
@@ -48,7 +48,7 @@ def zipFile(self,ui,filename):
     infoWrapper2=io.TextIOWrapper(da30File.open('XPS.ini'),encoding='utf-8')
     config2 = configparser.ConfigParser(strict=False)
     config2.read_file(infoWrapper2)
-    ui.energyBox.setText(config2['SES']['Excitation Energy'])
+    self.energyBox.setText(config2['SES']['Excitation Energy'])
     M=M.copy()
     da30File.close()
     print(M.shape)

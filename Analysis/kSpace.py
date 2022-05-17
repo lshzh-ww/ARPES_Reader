@@ -65,15 +65,16 @@ def ToKzKxSpace(data, axis1Position, axis2Position, PhotonEnergyPosition, polar,
 
 @jit(nopython=True)
 def ToKyKxSpace(data, axis1Position, axis2Position, polarPosition, Energy,v0):
-    xRange=len(axis1Position)//2
-    yRange=len(axis1Position)//2
-    
-    displayData=numpy.zeros((len(axis2Position),xRange,yRange),dtype=numpy.float32)
     kxMax=kConstant*math.sqrt(axis2Position[len(axis2Position)-1]+Energy)*math.sin(axis1Position[len(axis1Position)-1]*pi/180.0)*1.1
     kxMin=kConstant*math.sqrt(axis2Position[len(axis2Position)-1]+Energy)*math.sin(axis1Position[0]*pi/180.0)*1.1
     kyMax=kConstant*math.sqrt(axis2Position[len(axis2Position)-1]+Energy)*math.sin(polarPosition[len(polarPosition)-1]*pi/180.0)*1.1
     kyMin=kConstant*math.sqrt(axis2Position[len(axis2Position)-1]+Energy)*math.sin(polarPosition[0]*pi/180.0)*1.1
     print(kxMax,kxMin,kyMax,kyMin)
+    
+    xRange=len(axis1Position)//2
+    #yRange=len(axis1Position)//2
+    yRange=int(xRange*(kyMax-kyMin)/(kxMax-kxMin))
+    displayData=numpy.zeros((len(axis2Position),xRange,yRange),dtype=numpy.float32)
 
     for k in range(len(axis2Position)):
         for i in range(len(polarPosition)):

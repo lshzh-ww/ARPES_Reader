@@ -166,13 +166,28 @@ def slowCalFL(data,fLPos,zeroThetaX,energyAxis,Temp):
 
 # rotate a 2D array respect to a given position
 def rotate2D(data,angle,x0,y0):
-    xAxisLen=len(data[0])
-    yAxisLen=len(data)
-    x0=int(x0)
-    y0=int(y0)
-    angle=numpy.radians(angle)
-    newData=numpy.zeros((yAxisLen,xAxisLen))
+    xAxisLen=len(data)
+    yAxisLen=len(data[0])
+    newData=numpy.zeros((xAxisLen,yAxisLen))
     for i in range(xAxisLen):
         for j in range(yAxisLen):
-            newData[j,i]=data[y0-yAxisLen//2+int(round(j*numpy.sin(angle)+i*numpy.cos(angle))),x0-xAxisLen//2+int(round(j*numpy.cos(angle)-i*numpy.sin(angle)))]
+            x_prime=x0+round(-(j-y0)*numpy.sin(angle)+(i-x0)*numpy.cos(angle))
+            y_prime=y0+round((j-y0)*numpy.cos(angle)+(i-x0)*numpy.sin(angle))
+            if x_prime>=0 and x_prime<xAxisLen and y_prime>=0 and y_prime<yAxisLen:
+                newData[i,j]=data[x_prime,y_prime]
+    
+    return newData
+
+def rotate3D(data,angle,x0,y0):
+    indexLen=len(data)
+    xAxisLen=len(data[0])
+    yAxisLen=len(data[0][0])
+    newData=numpy.zeros((indexLen,xAxisLen,yAxisLen))
+    for i in range(xAxisLen):
+        for j in range(yAxisLen):
+            x_prime=x0+round(-(j-y0)*numpy.sin(angle)+(i-x0)*numpy.cos(angle))
+            y_prime=y0+round((j-y0)*numpy.cos(angle)+(i-x0)*numpy.sin(angle))
+            if x_prime>=0 and x_prime<xAxisLen and y_prime>=0 and y_prime<yAxisLen:
+                newData[:,i,j]=data[:,x_prime,y_prime]
+    
     return newData

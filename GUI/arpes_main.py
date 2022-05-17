@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 
-# Form implementation generated from reading ui file 'arpes_reader.ui'
+# Form implementation generated from reading ui file 'arpes_main.ui'
 #
 # Created by: PyQt5 UI code generator 5.15.2
 #
@@ -28,7 +28,7 @@ class Ui_MainWindow(object):
         self.splitter.setOrientation(QtCore.Qt.Vertical)
         self.splitter.setObjectName("splitter")
         self.topGraphWidget = ImageView(self.splitter)
-        sizePolicy = QtWidgets.QSizePolicy(QtWidgets.QSizePolicy.Expanding, QtWidgets.QSizePolicy.Expanding)
+        sizePolicy = QtWidgets.QSizePolicy(QtWidgets.QSizePolicy.Preferred, QtWidgets.QSizePolicy.Preferred)
         sizePolicy.setHorizontalStretch(4)
         sizePolicy.setVerticalStretch(3)
         sizePolicy.setHeightForWidth(self.topGraphWidget.sizePolicy().hasHeightForWidth())
@@ -200,6 +200,8 @@ class Ui_MainWindow(object):
         self.gaussianBlurAct.setObjectName("gaussianBlurAct")
         self.integrateAlongEaxisAct = QtWidgets.QAction(MainWindow)
         self.integrateAlongEaxisAct.setObjectName("integrateAlongEaxisAct")
+        self.alignFermiSufAct = QtWidgets.QAction(MainWindow)
+        self.alignFermiSufAct.setObjectName("alignFermiSufAct")
         self.menuFile.addAction(self.loadFileAct)
         self.menuFile.addAction(self.txt2npyAct)
         self.menuFile.addAction(self.exitAct)
@@ -210,6 +212,7 @@ class Ui_MainWindow(object):
         self.menuAnalysis.addAction(self.findBandPosAct)
         self.menuAnalysis.addAction(self.minGradAct)
         self.menuAnalysis.addAction(self.integrateAlongEaxisAct)
+        self.menuAnalysis.addAction(self.alignFermiSufAct)
         self.menubar.addAction(self.menuFile.menuAction())
         self.menubar.addAction(self.menuPre_Process.menuAction())
         self.menubar.addAction(self.menuAnalysis.menuAction())
@@ -257,4 +260,5 @@ class Ui_MainWindow(object):
         self.minGradAct.setText(_translate("MainWindow", "Minimum Gradient Method"))
         self.gaussianBlurAct.setText(_translate("MainWindow", "Gaussian Blur"))
         self.integrateAlongEaxisAct.setText(_translate("MainWindow", "Integrate Along E Axis"))
+        self.alignFermiSufAct.setText(_translate("MainWindow", "Align Fermi Surface with Axes"))
 from pyqtgraph import ImageView
