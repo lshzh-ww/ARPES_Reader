@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 
-# Form implementation generated from reading ui file 'arpes_main.ui'
+# Form implementation generated from reading ui file './GUI/arpes_main.ui'
 #
 # Created by: PyQt5 UI code generator 5.15.2
 #
@@ -202,6 +202,8 @@ class Ui_MainWindow(object):
         self.integrateAlongEaxisAct.setObjectName("integrateAlongEaxisAct")
         self.alignFermiSufAct = QtWidgets.QAction(MainWindow)
         self.alignFermiSufAct.setObjectName("alignFermiSufAct")
+        self.symmetrizeAct = QtWidgets.QAction(MainWindow)
+        self.symmetrizeAct.setObjectName("symmetrizeAct")
         self.menuFile.addAction(self.loadFileAct)
         self.menuFile.addAction(self.txt2npyAct)
         self.menuFile.addAction(self.exitAct)
@@ -213,6 +215,7 @@ class Ui_MainWindow(object):
         self.menuAnalysis.addAction(self.minGradAct)
         self.menuAnalysis.addAction(self.integrateAlongEaxisAct)
         self.menuAnalysis.addAction(self.alignFermiSufAct)
+        self.menuAnalysis.addAction(self.symmetrizeAct)
         self.menubar.addAction(self.menuFile.menuAction())
         self.menubar.addAction(self.menuPre_Process.menuAction())
         self.menubar.addAction(self.menuAnalysis.menuAction())
@@ -261,4 +264,5 @@ class Ui_MainWindow(object):
         self.gaussianBlurAct.setText(_translate("MainWindow", "Gaussian Blur"))
         self.integrateAlongEaxisAct.setText(_translate("MainWindow", "Integrate Along E Axis"))
         self.alignFermiSufAct.setText(_translate("MainWindow", "Align Fermi Surface with Axes"))
+        self.symmetrizeAct.setText(_translate("MainWindow", "Symmetrize Fermi Surface"))
 from pyqtgraph import ImageView

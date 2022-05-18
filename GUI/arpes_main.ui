@@ -317,6 +317,7 @@
     <addaction name="minGradAct"/>
     <addaction name="integrateAlongEaxisAct"/>
     <addaction name="alignFermiSufAct"/>
+    <addaction name="symmetrizeAct"/>
    </widget>
    <addaction name="menuFile"/>
    <addaction name="menuPre_Process"/>
@@ -376,6 +377,11 @@
   <action name="alignFermiSufAct">
    <property name="text">
     <string>Align Fermi Surface with Axes</string>
+   </property>
+  </action>
+  <action name="symmetrizeAct">
+   <property name="text">
+    <string>Symmetrize Fermi Surface</string>
    </property>
   </action>
  </widget>

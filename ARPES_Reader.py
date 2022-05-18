@@ -118,6 +118,7 @@ class MainWindow(QMainWindow, GUI.arpes_main.Ui_MainWindow):
             self.topGraphWidget.setImage(self.rawData,transform=self.generateTransform())
 
     def findBandPosFunc(self):
+        #broken, do not use
         xyRange=self.topGraphWidget.view.getViewBox().viewRange()
         for i in range(len(self.kxPosition)):
             if self.kxPosition[i]<xyRange[0][0]:
@@ -247,6 +248,31 @@ class MainWindow(QMainWindow, GUI.arpes_main.Ui_MainWindow):
         #display the new data
         self.topGraphWidget.setImage(self.displayData,transform=self.generateTransform())
 
+    def symmetrizeFunc(self):
+        #pop a window to get the N-fold symmetry
+        text,ok=QInputDialog.getText(self,'N-fold Symmetry','Enter the N-fold symmetry (e.g. 2)') 
+        if ok:
+            if text =='mirror':
+                x0=np.where(self.kxPosition>0)[0][0]
+                newDisplayData=self.displayData.copy()
+                newDisplayData=np.roll(np.flip(newDisplayData,axis=1),2*x0-len(newDisplayData[0]),axis=1)
+                newDisplayData+=self.displayData
+                self.displayData=newDisplayData
+                self.topGraphWidget.setImage(self.displayData,transform=self.generateTransform())
+
+            else:
+                n=int(text)
+                newDisplayData=self.displayData.copy()
+                x0=np.where(self.kxPosition>0)[0][0]
+                y0=np.where(self.kyPosition>0)[0][0]
+                for i in range(n):
+                    newDisplayData+=Analysis.thetaSpace.rotate3D(self.displayData,float(i)*2.*np.pi/float(n),x0,y0)
+                self.displayData=newDisplayData
+                self.topGraphWidget.setImage(self.displayData,transform=self.generateTransform())
+
+            
+
+
     def __init__(self):
         super(MainWindow, self).__init__()
         self.setupUi(self)
@@ -275,6 +301,7 @@ class MainWindow(QMainWindow, GUI.arpes_main.Ui_MainWindow):
         self.gaussianBlurAct.triggered.connect(self.gaussianBlurFunc)
         self.integrateAlongEaxisAct.triggered.connect(self.integrateAlongEaxisFunc)
         self.alignFermiSufAct.triggered.connect(self.openAlignFermiSurfFunc)
+        self.symmetrizeAct.triggered.connect(self.symmetrizeFunc)
 
         #default select tab 1.
         self.tabWidget.setCurrentIndex(0)
