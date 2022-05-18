@@ -1,6 +1,9 @@
 from hashlib import new
 from locale import currency
 import os
+
+from matplotlib.pyplot import sci
+import scipy.optimize
 import FileIO.loadData
 import CustomWidgets.plot2
 import Analysis.kSpace
@@ -44,15 +47,38 @@ class MainWindow(QMainWindow, GUI.arpes_main.Ui_MainWindow):
         home_dir = str(Path.home())
         if self.lastTimeDir!='':
             home_dir=self.lastTimeDir
-        fname = QFileDialog.getOpenFileName(self,'Open file', home_dir)
-        self.lastTimeDir=os.path.dirname(fname[0])
-        self.rawData=FileIO.loadData.load(self,fname[0])
-        #set energy axis
-        self.fermi_pos=Analysis.thetaSpace.findMaxSlope(np.sum(self.rawData[len(self.rawData)//2],0))
-        print(self.axis2Position[self.fermi_pos])
-        self.axis2Position=self.axis2Position-self.axis2Position[self.fermi_pos]
-        dataShape=np.shape(self.rawData)
-        print(dataShape)
+        myFileDialog=QFileDialog()
+        myFileDialog.setFileMode(QFileDialog.ExistingFiles)
+        fname = myFileDialog.getOpenFileNames(self,'Open file', home_dir)
+        if len(fname[0])==1:
+            self.lastTimeDir=os.path.dirname(fname[0][0])
+            self.rawData=FileIO.loadData.load(self,fname[0][0])
+            #set energy axis
+            self.fermi_pos=Analysis.thetaSpace.findMaxSlope(np.sum(self.rawData[len(self.rawData)//2],0))
+            print(self.axis2Position[self.fermi_pos])
+            self.axis2Position=self.axis2Position-self.axis2Position[self.fermi_pos]
+        elif len(fname[0])>1:
+            self.lastTimeDir=os.path.dirname(fname[0][0])
+            for i in range(len(fname[0])):
+                if i==0:
+                    rawData1=FileIO.loadData.load(self,fname[0][i])
+                    tempAxis1=self.axis1Position.copy()
+                    tempAxis2=self.axis2Position.copy()
+                    self.rawData=np.zeros((len(fname[0]),len(rawData1),len(rawData1[0])))
+                    self.rawData[i]=rawData1.copy()
+                    result,err=scipy.optimize.curve_fit(partial(Analysis.thetaSpace.fermiDiracDis,20,0.01),self.axis2Position,np.sum(self.rawData[i],0),p0=[0,np.mean(self.axis2Position),0.5*np.mean(np.sum(self.rawData[i],0))],maxfev=10000)
+                    self.fermi_pos=np.where(self.axis2Position>result[1])[0][0]
+                else:
+                    rawData1=FileIO.loadData.load(self,fname[0][i])
+                    self.rawData[i]=rawData1.copy()
+                    result,err=scipy.optimize.curve_fit(partial(Analysis.thetaSpace.fermiDiracDis,20,0.01),self.axis2Position,np.sum(self.rawData[i],0),p0=[0,np.mean(self.axis2Position),0.5*np.mean(np.sum(self.rawData[i],0))],maxfev=10000)
+                    c_fermi_pos=np.where(self.axis2Position>result[1])[0][0]
+                    self.rawData[i]=np.roll(self.rawData[i],-self.fermi_pos+c_fermi_pos,axis=1)
+                
+                self.axis1Position=tempAxis1
+                self.axis2Position=tempAxis2
+                #set energy axis
+                self.axis2Position=self.axis2Position-self.axis2Position[self.fermi_pos]
         self.currentStatus='Ready'
         trans=QTransform()
         trans.translate(self.axis1Position[0],self.axis2Position[0])

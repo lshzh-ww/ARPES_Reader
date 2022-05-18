@@ -5,6 +5,7 @@ from pathlib import Path
 import zipfile
 import configparser
 import io
+import igor.binarywave
 
 def load(self,filename):
     fileType=filename[len(filename)-3:]
@@ -16,6 +17,8 @@ def load(self,filename):
         return txtFile(self,filename)
     elif fileType=='zip':
         return zipFile(self,filename)   
+    elif fileType=='ibw':
+        return ibwFile(self,filename)
 
 
 def matFile(self,filename):
@@ -75,6 +78,15 @@ def npyFile(self,filename):
     self.axis2Position=numpy.linspace(54.426453,54.426453+609*0.001635,610)
     #return data[:,1:,1:]
     return data[:,:,:]
+
+# load igor pro ibw file with igor package
+def ibwFile(self,filename):
+    data=igor.binarywave.load(filename)
+    array=numpy.swapaxes(data['wave']['wData'],0,1)
+    self.axis2Position=numpy.arange(data['wave']['wave_header']['nDim'][0],dtype=numpy.float32)*data['wave']['wave_header']['sfA'][0]+data['wave']['wave_header']['sfB'][0]
+    self.axis1Position=numpy.arange(data['wave']['wave_header']['nDim'][1],dtype=numpy.float32)*data['wave']['wave_header']['sfA'][1]+data['wave']['wave_header']['sfB'][1]
+    return array
+    
 
 
 def TXT2NPY(self,filename):
