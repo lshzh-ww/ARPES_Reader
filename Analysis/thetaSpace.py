@@ -177,7 +177,8 @@ def rotate2D(data,angle,x0,y0):
                 newData[i,j]=data[x_prime,y_prime]
     
     return newData
-
+    
+@jit(nopython=True)
 def rotate3D(data,angle,x0,y0):
     indexLen=len(data)
     xAxisLen=len(data[0])

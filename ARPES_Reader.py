@@ -203,7 +203,7 @@ class MainWindow(QMainWindow, GUI.arpes_main.Ui_MainWindow):
 
     def openAlignFermiSurfFunc(self):
         self.transformList=[]
-        ch=Dialog_translate(self,self.displayData[self.topGraphWidget.currentIndex],self.kxPosition,self.kyPosition)
+        ch=Dialog_translate(self,self.displayData,self.kxPosition,self.kyPosition)
         ch.open()
 
     def applyAlignFermiSurface(self):
@@ -269,47 +269,68 @@ class Dialog_translate(QDialog, GUI.image_translation.Ui_Dialog):
         trans.translate(self.axis1Position[0],self.axis2Position[0])
         trans.scale((self.axis1Position[len(self.axis1Position)-1]-self.axis1Position[0])/len(self.axis1Position),(self.axis2Position[len(self.axis2Position)-1]-self.axis2Position[0])/len(self.axis2Position))
         return trans
-    
+
+    def loadImageViewStatus(self):
+        result=np.zeros(3)
+        result[0]=self.leftGraphWidget.currentIndex
+        minMaxLevels=self.leftGraphWidget.getHistogramWidget().getLevels()
+        result[1]=minMaxLevels[0]
+        result[2]=minMaxLevels[1]
+        return result
+
+    def restoreImageViewStatus(self,status):
+        self.leftGraphWidget.setCurrentIndex(int(status[0]))
+        self.leftGraphWidget.getHistogramWidget().setLevels(status[1],status[2])
+
     def moveRightFunc(self):
+        currentStatus=self.loadImageViewStatus()
         deltaX=int(self.deltaXBox.text())
         #roll all elements in 2D matrix self.displayData up by deltaX
         if np.sum(self.transformList[-1]*np.array([deltaX,0,0]))!=0:
             self.transformList[-1]=self.transformList[-1]+np.array([deltaX,0,0])
         else:
             self.transformList.append(np.array([deltaX,0,0]))
-        self.displayData=np.roll(self.displayData,deltaX,axis=0)
+        self.displayData=np.roll(self.displayData,deltaX,axis=1)
         #set new display data
         self.leftGraphWidget.setImage(self.displayData,transform=self.generateTransform())
+        self.restoreImageViewStatus(currentStatus)
         
 
     def moveLeftFunc(self):
+        currentStatus=self.loadImageViewStatus()
         deltaX=int(self.deltaXBox.text())
         if np.sum(self.transformList[-1]*np.array([-deltaX,0,0]))!=0:
             self.transformList[-1]=self.transformList[-1]+np.array([-deltaX,0,0])
         else:
             self.transformList.append(np.array([-deltaX,0,0]))
-        self.displayData=np.roll(self.displayData,-deltaX,axis=0)
+        self.displayData=np.roll(self.displayData,-deltaX,axis=1)
         self.leftGraphWidget.setImage(self.displayData,transform=self.generateTransform())
+        self.restoreImageViewStatus(currentStatus)
 
-    def moveDownFunc(self):
+    def moveUpFunc(self):
+        currentStatus=self.loadImageViewStatus()
         deltaY=int(self.deltaXBox.text())
         if np.sum(self.transformList[-1]*np.array([0,deltaY,0]))!=0:
             self.transformList[-1]=self.transformList[-1]+np.array([0,deltaY,0])
         else:
             self.transformList.append(np.array([0,deltaY,0]))
-        self.displayData=np.roll(self.displayData,deltaY,axis=1)
+        self.displayData=np.roll(self.displayData,deltaY,axis=2)
         self.leftGraphWidget.setImage(self.displayData,transform=self.generateTransform())
+        self.restoreImageViewStatus(currentStatus)
     
-    def moveUpFunc(self):
+    def moveDownFunc(self):
+        currentStatus=self.loadImageViewStatus()
         deltaY=int(self.deltaXBox.text())
         if np.sum(self.transformList[-1]*np.array([0,-deltaY,0]))!=0:
             self.transformList[-1]=self.transformList[-1]+np.array([0,-deltaY,0])
         else:
             self.transformList.append(np.array([0,-deltaY,0]))
-        self.displayData=np.roll(self.displayData,-deltaY,axis=1)
+        self.displayData=np.roll(self.displayData,-deltaY,axis=2)
         self.leftGraphWidget.setImage(self.displayData,transform=self.generateTransform())
+        self.restoreImageViewStatus(currentStatus)
 
     def clockwiseFunc(self):
+        currentStatus=self.loadImageViewStatus()
         deltaDeg=float(self.deltaDegBox.text())*np.pi/180.
         if np.sum(self.transformList[-1]*np.array([0,0,deltaDeg]))!=0:
             self.transformList[-1]=self.transformList[-1]+np.array([0,0,deltaDeg])
@@ -319,15 +340,17 @@ class Dialog_translate(QDialog, GUI.image_translation.Ui_Dialog):
         self.displayData=self.rawData
         for i in range(len(self.transformList)):
             if self.transformList[i][0]!=0:
-                self.displayData=np.roll(self.displayData,self.transformList[i][0],axis=0)
+                self.displayData=np.roll(self.displayData,self.transformList[i][0],axis=1)
             elif self.transformList[i][1]!=0:
-                self.displayData=np.roll(self.displayData,self.transformList[i][1],axis=1)
+                self.displayData=np.roll(self.displayData,self.transformList[i][1],axis=2)
             elif self.transformList[i][2]!=0:
-                self.displayData=Analysis.thetaSpace.rotate2D(self.displayData,self.transformList[i][2],self.axis1Zero,self.axis2Zero)
+                self.displayData=Analysis.thetaSpace.rotate3D(self.displayData,self.transformList[i][2],self.axis1Zero,self.axis2Zero)
 
         self.leftGraphWidget.setImage(self.displayData,transform=self.generateTransform())
+        self.restoreImageViewStatus(currentStatus)
 
     def counterClockwiseFunc(self):
+        currentStatus=self.loadImageViewStatus()
         deltaDeg=float(self.deltaDegBox.text())*np.pi/180.
         if np.sum(self.transformList[-1]*np.array([0,0,-deltaDeg]))!=0:
             self.transformList[-1]=self.transformList[-1]+np.array([0,0,-deltaDeg])
@@ -337,13 +360,30 @@ class Dialog_translate(QDialog, GUI.image_translation.Ui_Dialog):
         self.displayData=self.rawData
         for i in range(len(self.transformList)):
             if self.transformList[i][0]!=0:
-                self.displayData=np.roll(self.displayData,self.transformList[i][0],axis=0)
+                self.displayData=np.roll(self.displayData,self.transformList[i][0],axis=1)
             elif self.transformList[i][1]!=0:
-                self.displayData=np.roll(self.displayData,self.transformList[i][1],axis=1)
+                self.displayData=np.roll(self.displayData,self.transformList[i][1],axis=2)
             elif self.transformList[i][2]!=0:
-                self.displayData=Analysis.thetaSpace.rotate2D(self.displayData,self.transformList[i][2],self.axis1Zero,self.axis2Zero)
+                self.displayData=Analysis.thetaSpace.rotate3D(self.displayData,self.transformList[i][2],self.axis1Zero,self.axis2Zero)
 
         self.leftGraphWidget.setImage(self.displayData,transform=self.generateTransform())
+        self.restoreImageViewStatus(currentStatus)
+
+    def addRefLineTool(self):
+        #open a QInputDialog to get the reference line parameters
+        text,ok=QInputDialog.getText(self,'Reference Line','Enter the reference line parameters in the form of "x1,y1,x2,y2,..."')
+        if ok:
+            #store in a array
+            refLine=np.array(text.split(','),dtype=float)
+            print(refLine)
+            #check if the array is of the correct size
+            if len(refLine)%2==0:
+                imv_v=self.leftGraphWidget.getView()
+                refPlot=pg.PlotDataItem(x=refLine[0::2],y=refLine[1::2],pen=pg.mkPen(color='r',width=1))
+                imv_v.addItem(refPlot)
+
+  
+
 
     def acceptFunc(self):
         print('Accept change')
@@ -395,6 +435,7 @@ class Dialog_translate(QDialog, GUI.image_translation.Ui_Dialog):
         self.counterClockwiseButton.clicked.connect(self.counterClockwiseFunc)
         self.buttonBox.rejected.connect(self.close)
         self.buttonBox.accepted.connect(self.acceptFunc)
+        self.toolButton.clicked.connect(self.addRefLineTool)
         
     def open(self):
         self.show()
