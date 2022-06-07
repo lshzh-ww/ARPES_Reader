@@ -1,13 +1,13 @@
+from ast import Num
 from hashlib import new
 from locale import currency
 import os
 
 from matplotlib.pyplot import sci
 import scipy.optimize
-import FileIO.loadData
+import FileIO
 import CustomWidgets.plot2
-import Analysis.kSpace
-import Analysis.thetaSpace
+import Analysis
 from functools import partial
 
 import sys
@@ -20,13 +20,22 @@ from PyQt5.QtGui import QTransform
 from pathlib import Path
 
 
-import GUI.arpes_main
-import GUI.image_translation
+import GUI
 
 class MainWindow(QMainWindow, GUI.arpes_main.Ui_MainWindow):
     def showEnergyFunc(self):
-        self.bindingEnergyDisplay.setText('Energy='+"%.4f" % self.axis2Position[self.topGraphWidget.currentIndex]+'eV')
-
+        if self.currentStatus=='kxky':
+            self.bindingEnergyDisplay.setText('Energy='+"%.4f" % self.axis2Position[self.topGraphWidget.currentIndex]+'eV     kz='+"%.4f" % self.kSpaceData[4]+'Å')
+            try:
+                self.topGraphWidget.getHistogramWidget().setLevels(self.blackWhiteLeveslRatio[0]*np.mean(self.displayData[self.topGraphWidget.currentIndex]),self.blackWhiteLeveslRatio[1]*np.mean(self.displayData[self.topGraphWidget.currentIndex]))
+            except AttributeError:
+                pass
+    def getBlackWhiteLevelsFunc(self):
+        try:
+            if np.mean(self.displayData[self.topGraphWidget.currentIndex]!=0):
+                self.blackWhiteLeveslRatio=self.topGraphWidget.getHistogramWidget().getLevels()/np.mean(self.displayData[self.topGraphWidget.currentIndex])
+        except AttributeError:
+            pass
     #generate QTransform for the image based on currentStatus
     def generateTransform(self):
         trans=QTransform()
@@ -95,6 +104,20 @@ class MainWindow(QMainWindow, GUI.arpes_main.Ui_MainWindow):
         fname = QFileDialog.getOpenFileName(self, 'Open file', home_dir)
         FileIO.loadData.TXT2NPY(self,fname[0])
         
+    def saveScanGeometryFunc(self):
+        if self.transformList!=None:
+            fname = QFileDialog.getSaveFileName(self, 'Save file', self.lastTimeDir)
+            np.save(fname[0],self.transformList, allow_pickle=True)
+    
+    def loadScanGeometryFunc(self):
+        home_dir = str(Path.home())
+        if self.lastTimeDir!='':
+            home_dir=self.lastTimeDir
+        fname = QFileDialog.getOpenFileName(self, 'Open file', home_dir)
+        self.transformList=np.load(fname[0], allow_pickle=True)
+        self.applyAlignFermiSurface()
+    
+
     def normalizeFunc(self):
         self.rawData=Analysis.thetaSpace.normalizeData(self.rawData)[0]
         self.topGraphWidget.setImage(self.rawData,transform=self.generateTransform())
@@ -114,7 +137,11 @@ class MainWindow(QMainWindow, GUI.arpes_main.Ui_MainWindow):
         #Ask for the temperature and use the temperature to calculate the fermi surface
         text, ok = QInputDialog.getText(self, 'Fix Fermi Surface?','What is the temperature?')
         if ok:
-            Analysis.thetaSpace.slowCalFL(self.rawData, self.fermi_pos,i,self.axis2Position,float(text))
+            self.rawData=Analysis.thetaSpace.slowCalFL(self.rawData, self.fermi_pos,i,self.axis2Position,float(text))
+            newAxis2Length=len(self.rawData[0][0])
+            deltaE=self.axis2Position[1]-self.axis2Position[0]
+            newAxis2=np.linspace(self.axis2Position[0]-deltaE*(newAxis2Length-len(self.axis2Position)),self.axis2Position[len(self.axis2Position)-1],newAxis2Length)
+            self.axis2Position=newAxis2
             self.topGraphWidget.setImage(self.rawData,transform=self.generateTransform())
 
     def findBandPosFunc(self):
@@ -239,14 +266,50 @@ class MainWindow(QMainWindow, GUI.arpes_main.Ui_MainWindow):
         print(self.transformList)
         for i in range(len(self.transformList)):
             if self.transformList[i][0]!=0:
-                self.displayData=np.roll(self.displayData,self.transformList[i][0],axis=1)
+                self.displayData=np.roll(self.displayData,int(self.transformList[i][0]),axis=1)
             elif self.transformList[i][1]!=0:
-                self.displayData=np.roll(self.displayData,self.transformList[i][1],axis=2)
+                self.displayData=np.roll(self.displayData,int(self.transformList[i][1]),axis=2)
             elif self.transformList[i][2]!=0:
                 self.displayData=Analysis.thetaSpace.rotate3D(self.displayData,self.transformList[i][2],axis1Zero,axis2Zero)
 
         #display the new data
         self.topGraphWidget.setImage(self.displayData,transform=self.generateTransform())
+
+    def openGetCutFunc(self):
+        self.cutInfo=list()
+        ch=Dialog_getCut(self)
+        ch.open()
+
+    def generateCut(self):
+        print(self.cutInfo)
+        cutData=np.zeros((len(self.kxPosition),len(self.axis2Position)))
+        kLength=np.sqrt(np.sum(np.square(self.cutInfo[0]-self.cutInfo[1])))
+        newKaxis=np.linspace(0,kLength,len(cutData))
+        pointSeries=np.zeros((len(cutData),2))
+        pointSeries[:,0]=np.linspace(self.cutInfo[0][0],self.cutInfo[1][0],len(cutData))
+        pointSeries[:,1]=np.linspace(self.cutInfo[0][1],self.cutInfo[1][1],len(cutData))
+        deltaN=int(self.cutInfo[2]/(self.kxPosition[1]-self.kxPosition[0]))
+        theta=np.arctan((self.cutInfo[1]-self.cutInfo[0])[1]/(self.cutInfo[1]-self.cutInfo[0])[0])
+        distanceArray=np.sum(np.square(pointSeries),axis=1)
+        minIndex=np.argmin(distanceArray)
+        newKaxis=newKaxis-newKaxis[minIndex]
+        for i in range(len(cutData)):
+            x0=np.where(self.kxPosition>pointSeries[i,0])[0][0]
+            y0=np.where(self.kyPosition>pointSeries[i,1])[0][0]
+
+            for h in range(deltaN):
+                deltaX=round(-h*np.sin(theta))
+                deltaY=round(h*np.cos(theta))
+                if x0+deltaX>=0 and x0+deltaX<len(self.kxPosition):
+                    if y0+deltaY>=0 and y0+deltaY<len(self.kyPosition):
+                        cutData[i,:]=self.displayData[:,x0+deltaX,y0+deltaY]
+
+        ch=Dialog_translate(self,cutData,newKaxis,self.axis2Position)
+        ch.leftGraphWidget.view.getViewBox().setAspectLocked(lock=False)
+        ch.open()
+
+        
+        
 
     def symmetrizeFunc(self):
         #pop a window to get the N-fold symmetry
@@ -287,6 +350,7 @@ class MainWindow(QMainWindow, GUI.arpes_main.Ui_MainWindow):
         self.topGraphWidget.view.register(self.topGraphWidget.name)
 
         self.topGraphWidget.sigTimeChanged.connect(self.showEnergyFunc)
+        self.topGraphWidget.getHistogramWidget().sigLevelsChanged.connect(self.getBlackWhiteLevelsFunc)
         self.exitAct.setStatusTip('Exit application')
         self.exitAct.triggered.connect(qApp.quit)
         self.loadFileAct.triggered.connect(self.loadFileDiag)
@@ -300,8 +364,11 @@ class MainWindow(QMainWindow, GUI.arpes_main.Ui_MainWindow):
         self.kxkzBtn.clicked.connect(self.kxkzConvertFunc)
         self.gaussianBlurAct.triggered.connect(self.gaussianBlurFunc)
         self.integrateAlongEaxisAct.triggered.connect(self.integrateAlongEaxisFunc)
-        self.alignFermiSufAct.triggered.connect(self.openAlignFermiSurfFunc)
+        self.alignFermiSufAct_2.triggered.connect(self.openAlignFermiSurfFunc)
         self.symmetrizeAct.triggered.connect(self.symmetrizeFunc)
+        self.getCutAct.triggered.connect(self.openGetCutFunc)
+        self.actionLoad_Existed_Result.triggered.connect(self.loadScanGeometryFunc)
+        self.actionSave_Current_Result.triggered.connect(self.saveScanGeometryFunc)
 
         #default select tab 1.
         self.tabWidget.setCurrentIndex(0)
@@ -317,6 +384,17 @@ class MainWindow(QMainWindow, GUI.arpes_main.Ui_MainWindow):
         self.move(x, y)
 
 class Dialog_translate(QDialog, GUI.image_translation.Ui_Dialog):
+    def indexChangedFunc(self):
+        try:
+            self.leftGraphWidget.getHistogramWidget().setLevels(self.blackWhiteLeveslRatio[0]*np.mean(self.displayData[self.leftGraphWidget.currentIndex]),self.blackWhiteLeveslRatio[1]*np.mean(self.displayData[self.leftGraphWidget.currentIndex]))
+        except AttributeError:
+            pass
+
+    def getBlackWhiteLevelsFunc(self):
+        if np.mean(self.displayData[self.leftGraphWidget.currentIndex]!=0):
+            self.blackWhiteLeveslRatio=self.leftGraphWidget.getHistogramWidget().getLevels()/np.mean(self.displayData[self.leftGraphWidget.currentIndex])
+
+
     def generateTransform(self):
         trans=QTransform()
         trans.translate(self.axis1Position[0],self.axis2Position[0])
@@ -346,8 +424,7 @@ class Dialog_translate(QDialog, GUI.image_translation.Ui_Dialog):
         self.displayData=np.roll(self.displayData,deltaX,axis=1)
         #set new display data
         self.leftGraphWidget.setImage(self.displayData,transform=self.generateTransform())
-        self.restoreImageViewStatus(currentStatus)
-        
+        self.restoreImageViewStatus(currentStatus) 
 
     def moveLeftFunc(self):
         currentStatus=self.loadImageViewStatus()
@@ -435,9 +512,6 @@ class Dialog_translate(QDialog, GUI.image_translation.Ui_Dialog):
                 refPlot=pg.PlotDataItem(x=refLine[0::2],y=refLine[1::2],pen=pg.mkPen(color='r',width=1))
                 imv_v.addItem(refPlot)
 
-  
-
-
     def acceptFunc(self):
         print('Accept change')
         self.parent().transformList=self.transformList
@@ -471,15 +545,17 @@ class Dialog_translate(QDialog, GUI.image_translation.Ui_Dialog):
 
         self.leftGraphWidget.setImage(self.displayData,transform=self.generateTransform())
         imv_v=self.leftGraphWidget.getView()
-        ref_x=pg.PlotCurveItem(x=[self.axis1Position[0],self.axis1Position[len(self.axis1Position)-1]],y=[0,0],pen=pg.mkPen('r',width=1))
-        ref_y=pg.PlotCurveItem(x=[0,0],y=[self.axis2Position[0],self.axis2Position[len(self.axis2Position)-1]],pen=pg.mkPen('r',width=1))
-        imv_v.addItem(ref_x)
-        imv_v.addItem(ref_y)
+        #ref_x=pg.PlotCurveItem(x=[self.axis1Position[0],self.axis1Position[len(self.axis1Position)-1]],y=[0,0],pen=pg.mkPen('r',width=1))
+        #ref_y=pg.PlotCurveItem(x=[0,0],y=[self.axis2Position[0],self.axis2Position[len(self.axis2Position)-1]],pen=pg.mkPen('r',width=1))
+        #imv_v.addItem(ref_x)
+        #imv_v.addItem(ref_y)
 
 
         
         self.deltaXBox.setText('5')
         self.deltaDegBox.setText('0.5')
+        self.leftGraphWidget.sigTimeChanged.connect(self.indexChangedFunc)
+        self.leftGraphWidget.getHistogramWidget().sigLevelsChanged.connect(self.getBlackWhiteLevelsFunc)
         self.upButton.clicked.connect(self.moveUpFunc)
         self.downButton.clicked.connect(self.moveDownFunc)
         self.leftButton.clicked.connect(self.moveLeftFunc)
@@ -494,6 +570,28 @@ class Dialog_translate(QDialog, GUI.image_translation.Ui_Dialog):
         self.show()
 
 
+class Dialog_getCut(QDialog, GUI.getCut_Dialog.Ui_Dialog):
+    def __init__(self, parent=None):
+        super(Dialog_getCut, self).__init__(parent)
+        self.setupUi(self)
+        self.setWindowTitle('Get Cut Info')
+
+        self.deltaKBox.setText('0.1')
+
+        self.buttonBox.rejected.connect(self.close)
+        self.buttonBox.accepted.connect(self.acceptFunc)
+    
+    def acceptFunc(self):
+        print('Accept change')
+        self.parent().cutInfo=list()
+        self.parent().cutInfo.append(np.fromstring(self.startPointBox.text(),dtype=float,sep=','))
+        self.parent().cutInfo.append(np.fromstring(self.endPointBox.text(),dtype=float,sep=','))
+        self.parent().cutInfo.append(float(self.deltaKBox.text()))
+        self.parent().generateCut()
+        self.close()
+
+    def open(self):
+        return self.show()
         
 def main():
     app = QApplication(sys.argv)

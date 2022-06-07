@@ -70,7 +70,7 @@ def ToKyKxSpace(data, axis1Position, axis2Position, polarPosition, Energy,v0):
     kyMax=kConstant*math.sqrt(axis2Position[len(axis2Position)-1]+Energy)*math.sin(polarPosition[len(polarPosition)-1]*pi/180.0)*1.1
     kyMin=kConstant*math.sqrt(axis2Position[len(axis2Position)-1]+Energy)*math.sin(polarPosition[0]*pi/180.0)*1.1
     print(kxMax,kxMin,kyMax,kyMin)
-    
+    kzAvg=0.
     xRange=len(axis1Position)//2
     #yRange=len(axis1Position)//2
     yRange=int(xRange*(kyMax-kyMin)/(kxMax-kxMin))
@@ -80,20 +80,21 @@ def ToKyKxSpace(data, axis1Position, axis2Position, polarPosition, Energy,v0):
         for i in range(len(polarPosition)):
             kMap=theta2kMap(axis1Position,0,0,polarPosition[i],axis2Position[k],Energy,v0)
             for j in range(len(axis1Position)):
+                kzAvg+=kMap[j,2]
                 kx=kMap[j,0]
                 ky=kMap[j,1]
                 indexX=int(xRange*(kx-kxMin)/(kxMax-kxMin))
                 indexY=int(yRange*(ky-kyMin)/(kyMax-kyMin))
                 displayData[k,indexX,indexY]=data[i,j,k]
 
-
+    kzAvg=kzAvg/len(axis1Position)/len(axis2Position)/len(polarPosition)
     print('done')
     print(kyMax,kyMin,kxMax,kxMin)
     kxPosition=numpy.arange(kxMin,kxMax,(kxMax-kxMin)/xRange)
     kzPosition=numpy.arange(kyMin,kyMax,(kyMax-kyMin)/yRange)
     energyPosition=axis2Position
 
-    return displayData,kxPosition,kzPosition,energyPosition
+    return displayData,kxPosition,kzPosition,energyPosition,kzAvg
 
 @jit(nopython=True)
 def dataNoneInterpolation(displayData):

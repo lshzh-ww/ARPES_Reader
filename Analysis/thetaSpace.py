@@ -134,8 +134,11 @@ def slowCalFL(data,fLPos,zeroThetaX,energyAxis,Temp):
                 #fit the data within fitting region
                 result=fitFermiDirac(energyAxis[fittingRegion[0]:fittingRegion[1]],bins_array[i,fittingRegion[0]:fittingRegion[1]],Temp)
                 if result!=numpy.NaN:
-                    yPos_list.append(numpy.where(energyAxis>result)[0][0])
-                    xPos_list.append(int((float(i)-0.5)*xAxisLen/fN)-zeroThetaX)
+                    try:
+                        yPos_list.append(numpy.where(energyAxis>result)[0][0])
+                        xPos_list.append(int((float(i)-0.5)*xAxisLen/fN)-zeroThetaX)
+                    except IndexError:
+                        print(result,index,i,"IndexError")
                 else:
                     print("Filled at index:",index,'with value:',i)
 
@@ -155,12 +158,21 @@ def slowCalFL(data,fLPos,zeroThetaX,energyAxis,Temp):
     para=scipy.optimize.curve_fit(simpleParabolaFunc,range(len(data)-10),meta_para_fit[1,:-10])
     meta_para_fit[1]=simpleParabolaFunc(range(len(data)),para[0][0],para[0][1])
 
+    minRoll=10000
     for index in range(len(data)):    
         for i in range(len(data[0])):
             step=int(simpleParabolaFunc(i-zeroThetaX,meta_para_fit[0,index],meta_para_fit[1,index]))
-            data[index,i,:]=numpy.roll(data[index,i],-step+fLPos)
+            if -step+fLPos<minRoll:
+                minRoll=-step+fLPos
+            
+    newData=numpy.zeros((len(data),len(data[0]),len(data[0][0])-minRoll))       
+    for index in range(len(data)):
+        for i in range(len(data[0])):
+            step=int(simpleParabolaFunc(i-zeroThetaX,meta_para_fit[0,index],meta_para_fit[1,index]))
+            newData[index,i,-minRoll:]=data[index,i,:]
+            newData[index,i,:]=numpy.roll(newData[index,i],-step+fLPos)
     
-    return meta_para_fit
+    return newData
     
 
 

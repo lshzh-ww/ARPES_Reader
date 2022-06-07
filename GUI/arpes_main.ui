@@ -313,11 +313,20 @@
     <property name="title">
      <string>Analysis</string>
     </property>
+    <widget class="QMenu" name="menuAlign_Fermi_Surface_with_Axes">
+     <property name="title">
+      <string>Fermi Surface Geometry</string>
+     </property>
+     <addaction name="actionLoad_Existed_Result"/>
+     <addaction name="actionSave_Current_Result"/>
+     <addaction name="alignFermiSufAct_2"/>
+    </widget>
     <addaction name="findBandPosAct"/>
     <addaction name="minGradAct"/>
     <addaction name="integrateAlongEaxisAct"/>
-    <addaction name="alignFermiSufAct"/>
+    <addaction name="menuAlign_Fermi_Surface_with_Axes"/>
     <addaction name="symmetrizeAct"/>
+    <addaction name="getCutAct"/>
    </widget>
    <addaction name="menuFile"/>
    <addaction name="menuPre_Process"/>
@@ -374,14 +383,29 @@
     <string>Integrate Along E Axis</string>
    </property>
   </action>
-  <action name="alignFermiSufAct">
-   <property name="text">
-    <string>Align Fermi Surface with Axes</string>
-   </property>
-  </action>
   <action name="symmetrizeAct">
    <property name="text">
     <string>Symmetrize Fermi Surface</string>
+   </property>
+  </action>
+  <action name="getCutAct">
+   <property name="text">
+    <string>Get Cut</string>
+   </property>
+  </action>
+  <action name="actionLoad_Existed_Result">
+   <property name="text">
+    <string>Load Existed Result</string>
+   </property>
+  </action>
+  <action name="actionSave_Current_Result">
+   <property name="text">
+    <string>Save Current Result</string>
+   </property>
+  </action>
+  <action name="alignFermiSufAct_2">
+   <property name="text">
+    <string>Align Fermi Surface with BZ</string>
    </property>
   </action>
  </widget>
