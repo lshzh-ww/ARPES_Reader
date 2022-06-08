@@ -3,7 +3,7 @@ from hashlib import new
 from locale import currency
 import os
 
-from matplotlib.pyplot import sci
+from matplotlib.pyplot import connect, sci
 import scipy.optimize
 import FileIO
 import CustomWidgets.plot2
@@ -257,7 +257,7 @@ class MainWindow(QMainWindow, GUI.arpes_main.Ui_MainWindow):
 
     def openAlignFermiSurfFunc(self):
         self.transformList=[]
-        ch=Dialog_translate(self,self.displayData,self.kxPosition,self.kyPosition)
+        ch=Dialog_translate(self,self.displayData,self.kxPosition,self.kyPosition,self.axis2Position)
         ch.open()
 
     def applyAlignFermiSurface(self):
@@ -389,6 +389,21 @@ class Dialog_translate(QDialog, GUI.image_translation.Ui_Dialog):
             self.leftGraphWidget.getHistogramWidget().setLevels(self.blackWhiteLeveslRatio[0]*np.mean(self.displayData[self.leftGraphWidget.currentIndex]),self.blackWhiteLeveslRatio[1]*np.mean(self.displayData[self.leftGraphWidget.currentIndex]))
         except AttributeError:
             pass
+        self.setWindowTitle('Energy='+"%.4f" % self.energyPosition[self.leftGraphWidget.currentIndex]+'eV')
+        
+
+        imv_v=self.leftGraphWidget.getView()
+        #if existed self.refPlot, then remove it.
+        if hasattr(self,'bands_energy'):
+            if hasattr(self,'refBandsPlot'):
+                imv_v.removeItem(self.refBandsPlot)
+                del self.refBandsPlot
+            contourPoints=Analysis.kSpace.getBandsContourList(self.bands_energy,self.bands_kx,self.bands_ky,self.energyPosition[self.leftGraphWidget.currentIndex]+float(self.bandsRefEnergy.text()))
+            if len(contourPoints) >0:
+                self.refBandsPlot=pg.PlotDataItem(x=contourPoints[:,0],y=contourPoints[:,1],connect=np.zeros(len(contourPoints),dtype=np.int32),symbol='o',symbolPen=pg.mkPen(color='r'),symbolSize=1,pxMode=True)
+                imv_v.addItem(self.refBandsPlot)
+
+
 
     def getBlackWhiteLevelsFunc(self):
         if np.mean(self.displayData[self.leftGraphWidget.currentIndex]!=0):
@@ -512,19 +527,29 @@ class Dialog_translate(QDialog, GUI.image_translation.Ui_Dialog):
                 refPlot=pg.PlotDataItem(x=refLine[0::2],y=refLine[1::2],pen=pg.mkPen(color='r',width=1))
                 imv_v.addItem(refPlot)
 
+    def addBandsTool(self):
+        #open a FileDialog to get the band file
+        bandFileName=QFileDialog.getOpenFileName(self,'Open Band File','.','*.gnu')
+        if bandFileName[0]!='':
+            bandsData=np.loadtxt(bandFileName[0])
+            N=60
+            #interpolate the data to N points
+            self.bands_energy,self.bands_kx,self.bands_ky=Analysis.kSpace.upscaleKgrid(bandsData,N)
+
     def acceptFunc(self):
         print('Accept change')
         self.parent().transformList=self.transformList
         self.parent().applyAlignFermiSurface()
         self.close()
     
-    def __init__(self, parent=None, displayData=None, axis1Position=None, axis2Position=None):
+    def __init__(self, parent=None, displayData=None, axis1Position=None, axis2Position=None, energyPosition=None):
         super(Dialog_translate, self).__init__(parent)
         self.setupUi(self)
         self.setWindowTitle('Align Image')
 
         self.axis1Position=axis1Position
         self.axis2Position=axis2Position
+        self.energyPosition=energyPosition
         self.displayData=displayData
         self.rawData=displayData
         self.transformList=list()
@@ -565,6 +590,7 @@ class Dialog_translate(QDialog, GUI.image_translation.Ui_Dialog):
         self.buttonBox.rejected.connect(self.close)
         self.buttonBox.accepted.connect(self.acceptFunc)
         self.toolButton.clicked.connect(self.addRefLineTool)
+        self.addBandsButton.clicked.connect(self.addBandsTool)
         
     def open(self):
         self.show()

@@ -236,3 +236,61 @@ def integrateAlongEaxis(displayData,intRange):
                 newDisplayData[i,j,k]=numpy.sum(displayData[i-intRange:i+intRange,j,k])
 
     return newDisplayData
+
+
+def upscaleKgrid(qe_bands_contour,N):
+    """Input data shuuld be qe bands calculation with kgrid type tpiba_c, read by np.loadtxt(). Grid should be a square. Will interpolate to NxN grid"""
+
+    #find the first repeated point in qe_bands_contour[:,0]
+    for i in range(len(qe_bands_contour[:,0])):
+        if qe_bands_contour[i,0]==qe_bands_contour[i+1,0]:
+            data_n=i
+            break
+
+    #create original kgrid position list
+    original_points=numpy.zeros(((data_n+1)**2,2),dtype=numpy.float32)
+    for i in range((data_n+1)):
+        for j in range(data_n+1):
+            original_points[i*(data_n+1)+j,0]=qe_bands_contour[i,0]
+            original_points[i*(data_n+1)+j,1]=qe_bands_contour[j,0]        
+    
+    dense_y=numpy.linspace(qe_bands_contour[0,0],qe_bands_contour[data_n,0],N)
+    dense_x=numpy.linspace(qe_bands_contour[0,0],qe_bands_contour[data_n,0],N)
+    dense_x,dense_y=numpy.meshgrid(dense_x,dense_y)
+
+    bands_num=int(len(qe_bands_contour[:,0])/((data_n+1)**2))
+    bands_interpolation=numpy.zeros((bands_num,N,N),dtype=numpy.float32)
+
+    for i in range(bands_num):
+        bands_interpolation[i]=scipy.interpolate.griddata(original_points,qe_bands_contour[i*(data_n+1)**2:(i+1)*(data_n+1)**2,1],(dense_x,dense_y),method='cubic')
+
+    return bands_interpolation,dense_x,dense_y
+
+@jit(nopython=True)
+def getBandsContourList(bands_interpolation,dense_x,dense_y,ref_E):
+    list_kxky=list()
+    delta_kx=abs(dense_x[0,1]-dense_x[0,0])
+    delta_ky=abs(dense_y[1,0]-dense_y[0,0])
+    for bands_i in range(len(bands_interpolation)):
+        grid_z1=bands_interpolation[bands_i]
+        if numpy.max(grid_z1)<ref_E or numpy.min(grid_z1)>ref_E:
+            continue
+
+        for i in range(1,len(dense_x)-1):
+            for j in range(1,len(dense_x[0])-1):
+                kx_0=dense_x[i,j]
+                ky_0=dense_y[i,j]
+                if grid_z1[i,j]>ref_E:
+                    if grid_z1[i-1,j]<ref_E:
+                        list_kxky.append((kx_0-delta_kx*(grid_z1[i,j]-ref_E)/(grid_z1[i,j]-grid_z1[i-1,j]),ky_0))
+                    if grid_z1[i+1,j]<ref_E:
+                        list_kxky.append((kx_0+delta_kx*(grid_z1[i,j]-ref_E)/(grid_z1[i,j]-grid_z1[i+1,j]),ky_0))
+                    if grid_z1[i,j-1]<ref_E:
+                        list_kxky.append((kx_0,ky_0-delta_ky*(grid_z1[i,j]-ref_E)/(grid_z1[i,j]-grid_z1[i,j-1])))
+                    if grid_z1[i,j+1]<ref_E:
+                        list_kxky.append((kx_0,ky_0+delta_ky*(grid_z1[i,j]-ref_E)/(grid_z1[i,j]-grid_z1[i,j+1])))
+
+    contourArray=numpy.array(list_kxky)
+    contourArray=numpy.append(contourArray,contourArray*numpy.array([1,-1]),axis=0)
+    contourArray=numpy.append(contourArray,contourArray*numpy.array([-1,1]),axis=0)
+    return contourArray
